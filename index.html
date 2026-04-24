@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SubEdit</title>
+<title>Sub Buddy</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -125,14 +125,15 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 <body>
 
 <div class="topbar" id="topbar">
-  <div class="logo">SubEdit</div>
+  <div class="logo">Sub Buddy</div>
   <div class="topbar-right" id="topbarRight"></div>
 </div>
 
 <!-- HOME -->
 <div class="view active" id="vHome">
   <div class="page">
-    <h1>SubEdit — <span>subtitle editor</span></h1>
+    <h1>Sub Buddy</h1>
+    <p style="font-size:18px;font-weight:500;color:var(--accent);margin-bottom:12px">Subtitle Editor</p>
     <p>Upload an .srt file, add a Vimeo link and send the project to your client for review.</p>
 
     <div class="two-col">
@@ -310,7 +311,7 @@ dz.addEventListener('drop', e => {
 function showHome() {
   stopSync();
   loadProjects(); show('vHome');
-  document.getElementById('topbarRight').innerHTML = `<button class="btn btn-sm" onclick="showClientMode()">Client mode</button>`;
+  document.getElementById('topbar').style.display = 'none';
   renderProjList();
 }
 
@@ -376,7 +377,7 @@ function createProject() {
 function openProject(id) {
   CUR = PROJECTS.find(p => p.id === id); if (!CUR) return;
   show('vEditor');
-  document.getElementById('topbarRight').innerHTML = '';
+  document.getElementById('topbar').style.display = 'none';
   document.getElementById('edTitle').textContent = CUR.name;
   document.getElementById('edMeta').textContent = CUR.subtitles.length + ' subtitles';
   document.getElementById('edCount').textContent = CUR.subtitles.length + ' subtitles';
@@ -550,7 +551,7 @@ function importFromClientInEditor(inp) {
 
 function showClientMode() {
   stopSync(); show('vClient');
-  document.getElementById('topbarRight').innerHTML = '';
+  document.getElementById('topbar').style.display = 'none';
   document.getElementById('clTitle').textContent = 'Upload project file';
   document.getElementById('clPlayer').innerHTML = `<div style="text-align:center;color:var(--muted);max-width:400px"><p style="margin-bottom:20px;font-size:15px;line-height:1.6">Upload the <strong>.subedit.json</strong> file you received from the editor to start reviewing subtitles.</p><button class="btn btn-primary" onclick="document.getElementById('clientFileIn').click()">Upload project file</button><input type="file" id="clientFileIn" accept=".json" style="display:none" onchange="loadClientFile(this)" /></div>`;
   document.getElementById('clSubs').innerHTML = '<div class="empty">Upload the project file to see subtitles.</div>';
