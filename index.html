@@ -886,8 +886,18 @@ function tlRender() {
     ruler.appendChild(label);
   }
 
-  // Blocks
-  track.style.width = totalWidth + 'px';
+  // Click on ruler to seek
+  ruler.style.cursor = 'pointer';
+  ruler.addEventListener('click', e => {
+    const rect = ruler.getBoundingClientRect();
+    const scrollLeft = document.getElementById(TL_IDS.scroll).scrollLeft;
+    const x = e.clientX - rect.left + scrollLeft;
+    const sec = x / TL_PX_PER_SEC;
+    const frame = document.getElementById('vimeoFrame');
+    if (frame) {
+      frame.contentWindow.postMessage(JSON.stringify({ method: 'setCurrentTime', value: sec }), '*');
+    }
+  });
   track.innerHTML = '';
   track.onclick = e => {
     if (e.target === track && TL_EDIT_IDX !== null) {
