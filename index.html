@@ -841,6 +841,7 @@ function tlRender() {
       if (e.target.classList.contains('tl-handle')) return;
       TL_DRAG = null;
       window._pendingDrag = null;
+      historyPush(); // save state before text editing begins
       TL_EDIT_IDX = i;
       const frame = document.getElementById('vimeoFrame');
       if (frame) frame.contentWindow.postMessage(JSON.stringify({ method: 'pause' }), '*');
@@ -853,7 +854,6 @@ function tlRender() {
       if (e.detail >= 2) return;
       // Close any open text editing first
       if (TL_EDIT_IDX !== null && TL_EDIT_IDX !== i) {
-        historyPush();
         TL_EDIT_IDX = null;
         tlRender();
         renderSubs(window._subsElId || 'edSubs', CUR.subtitles);
@@ -914,7 +914,6 @@ document.addEventListener('mousedown', e => {
   const track = document.getElementById(TL_IDS.track);
   if (!track) return;
   if (!track.contains(e.target)) {
-    historyPush();
     TL_EDIT_IDX = null;
     tlRender();
     renderSubs(window._subsElId || 'edSubs', CUR.subtitles);
