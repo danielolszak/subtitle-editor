@@ -72,23 +72,23 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 
 .info { background:rgba(91,82,200,0.06); border:1px solid rgba(91,82,200,0.2); border-radius:8px; padding:13px 16px; font-size:13px; color:var(--accent); line-height:1.6; margin-bottom:18px; }
 
-/* EDITOR */
-.editor { display:grid; grid-template-columns:1fr 420px; height:calc(100vh - 56px); overflow:hidden; }
-@media(max-width:860px) { .editor { grid-template-columns:1fr; grid-template-rows:auto 1fr; } }
+/* EDITOR with timeline */
+.editor { display:grid; grid-template-columns:1fr 420px; grid-template-rows:1fr 200px; height:calc(100vh - 56px); overflow:hidden; }
+.player-side { grid-column:1; grid-row:1; border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; background:var(--bg2); }
+.subs-side { grid-column:2; grid-row:1; display:flex; flex-direction:column; overflow:hidden; background:var(--bg2); }
+.timeline-side { grid-column:1 / 3; grid-row:2; border-top:2px solid var(--border2); background:var(--bg2); display:flex; flex-direction:column; overflow:hidden; }
 
-.player-side { border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; background:var(--bg2); }
 .panel-head { padding:14px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; background:var(--bg2); }
 .panel-title { font-size:15px; font-weight:600; }
 .panel-meta { font-size:12px; color:var(--muted); margin-top:2px; font-family:var(--mono); }
 .panel-head-btns { display:flex; gap:8px; }
-.player-body { flex:1; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#111; padding:52px 80px; }
+.player-body { flex:1; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#111; padding:32px 60px; }
 .player-wrapper { position:relative; width:100%; aspect-ratio:16/9; border-radius:6px; overflow:hidden; }
 .player-wrapper iframe { position:absolute; inset:0; width:100%; height:100%; border:none; }
 .sub-overlay { position:absolute; bottom:48px; left:0; right:0; text-align:center; pointer-events:none; padding:0 40px; }
 .sub-overlay-text { display:inline-block; background:rgba(0,0,0,0.75); color:#fff; font-size:36px; font-weight:500; line-height:1.5; padding:6px 16px; border-radius:4px; white-space:pre-wrap; max-width:80%; }
 .no-video { text-align:center; color:var(--muted); font-size:14px; }
 
-.subs-side { display:flex; flex-direction:column; overflow:hidden; background:var(--bg2); }
 .subs-side > .panel-head { margin-top:32px; border-bottom:1px solid var(--border); }
 .subs-scroll { flex:1; overflow-y:auto; padding:10px 10px 32px 10px; scroll-behavior:smooth; }
 .subs-scroll::-webkit-scrollbar { width:5px; }
@@ -99,10 +99,34 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 .sub { border-radius:7px; padding:10px 12px; margin-bottom:5px; border:1px solid transparent; transition:background 0.1s; }
 .sub:hover { background:var(--bg); border-color:var(--border); }
 .sub.active-sub { background:rgba(91,82,200,0.07); border-color:rgba(91,82,200,0.25); }
-.sub-tc { font-family:var(--mono); font-size:10px; color:var(--accent); margin-bottom:5px; letter-spacing:0.02em; }
+.sub-tc { font-family:var(--mono); font-size:10px; color:var(--accent); margin-bottom:5px; letter-spacing:0.02em; cursor:pointer; }
 .sub-text { font-size:14px; line-height:1.55; color:var(--text); outline:none; white-space:pre-wrap; word-break:break-word; border-radius:4px; }
 .sub-text:focus { background:rgba(91,82,200,0.05); padding:3px 5px; margin:-3px -5px; }
 .sub-text.dirty { color:var(--accent); }
+
+/* TIMELINE */
+.tl-head { padding:8px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:16px; flex-shrink:0; }
+.tl-head-label { font-family:var(--mono); font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; }
+.tl-time-display { font-family:var(--mono); font-size:12px; color:var(--accent); }
+.tl-scroll { flex:1; overflow-x:auto; overflow-y:hidden; position:relative; cursor:default; }
+.tl-scroll::-webkit-scrollbar { height:5px; }
+.tl-scroll::-webkit-scrollbar-track { background:var(--bg); }
+.tl-scroll::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+.tl-canvas-wrap { position:relative; height:100%; }
+.tl-ruler { position:absolute; top:0; left:0; right:0; height:24px; background:var(--bg3); border-bottom:1px solid var(--border); }
+.tl-track { position:absolute; top:24px; bottom:8px; left:0; right:0; }
+.tl-block { position:absolute; top:8px; bottom:8px; background:rgba(91,82,200,0.15); border:1.5px solid var(--accent2); border-radius:5px; cursor:pointer; overflow:hidden; transition:background 0.1s; user-select:none; }
+.tl-block:hover { background:rgba(91,82,200,0.22); }
+.tl-block.tl-active { background:rgba(91,82,200,0.3); border-color:var(--accent); }
+.tl-block.tl-editing { background:rgba(91,82,200,0.12); border-color:var(--accent); border-width:2px; }
+.tl-block-text { font-size:11px; color:var(--text); padding:4px 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; pointer-events:none; line-height:1.3; }
+.tl-block-input { position:absolute; inset:4px 6px; font-family:var(--sans); font-size:11px; color:var(--text); background:transparent; border:none; outline:none; resize:none; white-space:pre-wrap; line-height:1.3; }
+.tl-handle { position:absolute; top:0; bottom:0; width:8px; cursor:ew-resize; z-index:2; }
+.tl-handle-left { left:0; border-radius:4px 0 0 4px; }
+.tl-handle-right { right:0; border-radius:0 4px 4px 0; }
+.tl-handle:hover { background:rgba(91,82,200,0.3); }
+.tl-playhead { position:absolute; top:0; bottom:0; width:2px; background:var(--danger); pointer-events:none; z-index:10; }
+.tl-playhead::before { content:''; position:absolute; top:0; left:-4px; width:10px; height:10px; background:var(--danger); clip-path:polygon(50% 100%, 0 0, 100% 0); }
 
 .client-banner { background:rgba(91,82,200,0.07); border-bottom:1px solid rgba(91,82,200,0.15); padding:11px 22px; font-size:13px; color:var(--accent); font-family:var(--mono); }
 
@@ -199,6 +223,20 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
         <button class="btn btn-sm btn-success" style="flex:1" onclick="saveLocal()">Save changes</button>
       </div>
     </div>
+    <div class="timeline-side" id="edTimeline">
+      <div class="tl-head">
+        <span class="tl-head-label">Timeline</span>
+        <span class="tl-time-display" id="tlTimeDisplay">00:00:00</span>
+        <span style="font-size:11px;color:var(--muted)">Double-click a block to edit text · Drag edges to adjust timing</span>
+      </div>
+      <div class="tl-scroll" id="tlScroll">
+        <div class="tl-canvas-wrap" id="tlCanvas">
+          <div class="tl-ruler" id="tlRuler"></div>
+          <div class="tl-track" id="tlTrack"></div>
+          <div class="tl-playhead" id="tlPlayhead" style="display:none"></div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -224,6 +262,20 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
       <div class="subs-scroll" id="clSubs"></div>
       <div class="subs-foot">
         <button class="btn btn-sm btn-success" style="flex:1" onclick="clientExport()">Save & return to editor</button>
+      </div>
+    </div>
+    <div class="timeline-side" id="clTimeline">
+      <div class="tl-head">
+        <span class="tl-head-label">Timeline</span>
+        <span class="tl-time-display" id="clTlTimeDisplay">00:00:00</span>
+        <span style="font-size:11px;color:var(--muted)">Double-click a block to edit text · Drag edges to adjust timing</span>
+      </div>
+      <div class="tl-scroll" id="clTlScroll">
+        <div class="tl-canvas-wrap" id="clTlCanvas">
+          <div class="tl-ruler" id="clTlRuler"></div>
+          <div class="tl-track" id="clTlTrack"></div>
+          <div class="tl-playhead" id="clTlPlayhead" style="display:none"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -386,6 +438,8 @@ function openProject(id) {
   document.getElementById('edCount').textContent = CUR.subtitles.length + ' subtitles';
   renderPlayer('edPlayer', CUR.vimeoUrl, 'edSubs');
   renderSubs('edSubs', CUR.subtitles);
+  window._subsElId = 'edSubs';
+  setTimeout(() => tlInit('ed'), 100);
 }
 
 function renderPlayer(elId, url, subsElId) {
@@ -440,6 +494,8 @@ function onVimeoMessage(e) {
 }
 
 function highlightActiveSub(currentTime, subsElId) {
+  window._currentTime = currentTime;
+  tlUpdatePlayhead(currentTime);
   const scrollEl = document.getElementById(subsElId);
   if (!scrollEl || !CUR) return;
   const items = scrollEl.querySelectorAll('.sub');
@@ -612,6 +668,8 @@ function readClientFile(f) {
       document.getElementById('clCount').textContent = CUR.subtitles.length + ' subtitles';
       renderPlayer('clPlayer', CUR.vimeoUrl, 'clSubs');
       renderSubs('clSubs', CUR.subtitles);
+      window._subsElId = 'clSubs';
+      setTimeout(() => tlInit('cl'), 100);
       toast('Project loaded — you can now edit the subtitles!', 'ok');
     } catch(err) { toast('Error reading file: ' + err.message, 'err'); }
   };
@@ -626,6 +684,271 @@ function goHome() { showHome(); }
 
 let toastT;
 function toast(msg, type) { const el = document.getElementById('toast'); el.textContent = msg; el.className = 'toast show ' + (type||''); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 3500); }
+
+// ─── TIMELINE ─────────────────────────────────────────────────────────────
+const TL_WINDOW = 30; // seconds visible
+const TL_PX_PER_SEC = 80; // pixels per second
+let TL_OFFSET = 0; // start time of visible window
+let TL_DRAG = null; // { type: 'block'|'left'|'right'|'shared', subIdx, startX, startSec, neighborIdx }
+let TL_EDIT_IDX = null;
+let TL_IDS = {}; // { scroll, canvas, ruler, track, playhead, timeDisplay }
+
+function tlInit(prefix) {
+  TL_IDS = {
+    scroll: prefix === 'ed' ? 'tlScroll' : 'clTlScroll',
+    canvas: prefix === 'ed' ? 'tlCanvas' : 'clTlCanvas',
+    ruler: prefix === 'ed' ? 'tlRuler' : 'clTlRuler',
+    track: prefix === 'ed' ? 'tlTrack' : 'clTlTrack',
+    playhead: prefix === 'ed' ? 'tlPlayhead' : 'clTlPlayhead',
+    timeDisplay: prefix === 'ed' ? 'tlTimeDisplay' : 'clTlTimeDisplay'
+  };
+  tlRender();
+}
+
+function tlTotalWidth() { return TL_WINDOW * TL_PX_PER_SEC; }
+
+function tlSecToX(sec) { return (sec - TL_OFFSET) * TL_PX_PER_SEC; }
+function tlXToSec(x) { return x / TL_PX_PER_SEC + TL_OFFSET; }
+
+function tlFormatTime(sec) {
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = Math.floor(sec % 60);
+  const ms = Math.round((sec % 1) * 1000);
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')},${String(ms).padStart(3,'0')}`;
+}
+
+function tlSecToTimecode(start, end) {
+  return `${tlFormatTime(start)} --> ${tlFormatTime(end)}`;
+}
+
+function tlRender() {
+  if (!CUR) return;
+  const track = document.getElementById(TL_IDS.track);
+  const ruler = document.getElementById(TL_IDS.ruler);
+  const canvas = document.getElementById(TL_IDS.canvas);
+  if (!track || !ruler || !canvas) return;
+
+  const totalSecs = CUR.subtitles.reduce((max, s) => {
+    const end = tcToSec(s.timecode.split(' --> ')[1]);
+    return Math.max(max, end);
+  }, 60);
+  const totalWidth = Math.max(totalSecs * TL_PX_PER_SEC, 800);
+  canvas.style.width = totalWidth + 'px';
+  canvas.style.height = '100%';
+
+  // Ruler
+  ruler.style.width = totalWidth + 'px';
+  ruler.innerHTML = '';
+  for (let t = 0; t <= totalSecs; t += 5) {
+    const x = t * TL_PX_PER_SEC;
+    const tick = document.createElement('div');
+    tick.style.cssText = `position:absolute;left:${x}px;top:0;height:100%;border-left:1px solid var(--border2);`;
+    const label = document.createElement('span');
+    label.style.cssText = `position:absolute;left:${x+3}px;top:4px;font-family:var(--mono);font-size:10px;color:var(--muted);`;
+    label.textContent = new Date(t * 1000).toISOString().substr(11, 8);
+    ruler.appendChild(tick);
+    ruler.appendChild(label);
+  }
+
+  // Blocks
+  track.style.width = totalWidth + 'px';
+  track.innerHTML = '';
+  CUR.subtitles.forEach((s, i) => {
+    const parts = s.timecode.split(' --> ');
+    const start = tcToSec(parts[0]);
+    const end = tcToSec(parts[1]);
+    const x = start * TL_PX_PER_SEC;
+    const w = Math.max((end - start) * TL_PX_PER_SEC, 4);
+
+    const block = document.createElement('div');
+    block.className = 'tl-block';
+    block.dataset.idx = i;
+    block.style.left = x + 'px';
+    block.style.width = w + 'px';
+
+    if (TL_EDIT_IDX === i) {
+      block.classList.add('tl-editing');
+      const ta = document.createElement('textarea');
+      ta.className = 'tl-block-input';
+      ta.value = s.text;
+      ta.addEventListener('input', () => { s.text = ta.value; updateOverlayFromTimeline(); });
+      ta.addEventListener('blur', () => { TL_EDIT_IDX = null; tlRender(); renderSubs(window._subsElId || 'edSubs', CUR.subtitles); });
+      ta.addEventListener('mousedown', e => e.stopPropagation());
+      block.appendChild(ta);
+      setTimeout(() => ta.focus(), 0);
+    } else {
+      const txt = document.createElement('div');
+      txt.className = 'tl-block-text';
+      txt.textContent = s.text;
+      block.appendChild(txt);
+    }
+
+    // Handles
+    const lh = document.createElement('div');
+    lh.className = 'tl-handle tl-handle-left';
+    lh.dataset.type = 'left';
+    lh.dataset.idx = i;
+    block.appendChild(lh);
+
+    const rh = document.createElement('div');
+    rh.className = 'tl-handle tl-handle-right';
+    rh.dataset.type = 'right';
+    rh.dataset.idx = i;
+    block.appendChild(rh);
+
+    // Double click to edit
+    block.addEventListener('dblclick', e => {
+      if (e.target.classList.contains('tl-handle')) return;
+      TL_EDIT_IDX = i;
+      // Pause video
+      const frame = document.getElementById('vimeoFrame');
+      if (frame) frame.contentWindow.postMessage(JSON.stringify({ method: 'pause' }), '*');
+      tlRender();
+    });
+
+    // Drag start
+    block.addEventListener('mousedown', e => {
+      if (e.target.classList.contains('tl-block-input')) return;
+      e.preventDefault();
+      const idx = parseInt(block.dataset.idx);
+      const type = e.target.dataset.type;
+      const startSec = tcToSec(CUR.subtitles[idx].timecode.split(' --> ')[0]);
+      const endSec = tcToSec(CUR.subtitles[idx].timecode.split(' --> ')[1]);
+
+      // Check if right edge is shared with next block
+      let neighborIdx = null;
+      if (type === 'right' && idx < CUR.subtitles.length - 1) {
+        const nextStart = tcToSec(CUR.subtitles[idx + 1].timecode.split(' --> ')[0]);
+        if (Math.abs(endSec - nextStart) < 0.05) neighborIdx = idx + 1;
+      }
+      if (type === 'left' && idx > 0) {
+        const prevEnd = tcToSec(CUR.subtitles[idx - 1].timecode.split(' --> ')[1]);
+        if (Math.abs(startSec - prevEnd) < 0.05) neighborIdx = idx - 1;
+      }
+
+      TL_DRAG = { type: type || 'block', subIdx: idx, startX: e.clientX, startSec, endSec, neighborIdx };
+    });
+
+    track.appendChild(block);
+  });
+
+  tlUpdatePlayhead(window._currentTime || 0);
+}
+
+function tlUpdatePlayhead(currentTime) {
+  const playhead = document.getElementById(TL_IDS.playhead);
+  const timeDisplay = document.getElementById(TL_IDS.timeDisplay);
+  const scroll = document.getElementById(TL_IDS.scroll);
+  if (!playhead || !scroll) return;
+
+  const x = currentTime * TL_PX_PER_SEC;
+  playhead.style.left = x + 'px';
+  playhead.style.display = 'block';
+
+  if (timeDisplay) {
+    const h = Math.floor(currentTime / 3600);
+    const m = Math.floor((currentTime % 3600) / 60);
+    const s = Math.floor(currentTime % 60);
+    timeDisplay.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+
+  // Auto-scroll timeline to follow playhead when playing
+  if (window._isPlaying) {
+    const scrollLeft = scroll.scrollLeft;
+    const scrollWidth = scroll.clientWidth;
+    if (x < scrollLeft || x > scrollLeft + scrollWidth - 60) {
+      scroll.scrollLeft = Math.max(0, x - 60);
+    }
+  }
+}
+
+// Mouse move and up for dragging
+document.addEventListener('mousemove', e => {
+  if (!TL_DRAG || !CUR) return;
+  const dx = e.clientX - TL_DRAG.startX;
+  const dSec = dx / TL_PX_PER_SEC;
+  const s = CUR.subtitles[TL_DRAG.subIdx];
+  const parts = s.timecode.split(' --> ');
+  let start = tcToSec(parts[0]);
+  let end = tcToSec(parts[1]);
+  const minDur = 0.1;
+  const idx = TL_DRAG.subIdx;
+
+  // Get neighbours
+  const prevSub = idx > 0 ? CUR.subtitles[idx - 1] : null;
+  const nextSub = idx < CUR.subtitles.length - 1 ? CUR.subtitles[idx + 1] : null;
+  const prevEnd = prevSub ? tcToSec(prevSub.timecode.split(' --> ')[1]) : 0;
+  const nextStart = nextSub ? tcToSec(nextSub.timecode.split(' --> ')[0]) : Infinity;
+
+  if (TL_DRAG.type === 'block') {
+    const dur = TL_DRAG.endSec - TL_DRAG.startSec;
+    let newStart = Math.max(prevEnd, TL_DRAG.startSec + dSec);
+    let newEnd = newStart + dur;
+    // Clamp against next block
+    if (newEnd > nextStart) { newEnd = nextStart; newStart = newEnd - dur; }
+    // Clamp against prev block
+    if (newStart < prevEnd) { newStart = prevEnd; newEnd = newStart + dur; }
+    newStart = Math.max(0, newStart);
+    s.timecode = tlSecToTimecode(newStart, newEnd);
+
+  } else if (TL_DRAG.type === 'right') {
+    let newEnd = Math.max(start + minDur, TL_DRAG.endSec + dSec);
+    // If shared edge with next block, move both together
+    if (TL_DRAG.neighborIdx !== null) {
+      const nb = CUR.subtitles[TL_DRAG.neighborIdx];
+      const nbParts = nb.timecode.split(' --> ');
+      const nbEnd = tcToSec(nbParts[1]);
+      // Clamp: can't go past nbEnd - minDur, can't go before start + minDur
+      newEnd = Math.max(start + minDur, Math.min(nbEnd - minDur, newEnd));
+      s.timecode = tlSecToTimecode(start, newEnd);
+      nb.timecode = tlSecToTimecode(newEnd, nbEnd);
+    } else {
+      // Clamp against next block start
+      newEnd = Math.min(nextStart, newEnd);
+      s.timecode = tlSecToTimecode(start, newEnd);
+    }
+
+  } else if (TL_DRAG.type === 'left') {
+    let newStart = Math.min(end - minDur, TL_DRAG.startSec + dSec);
+    // If shared edge with prev block, move both together
+    if (TL_DRAG.neighborIdx !== null) {
+      const nb = CUR.subtitles[TL_DRAG.neighborIdx];
+      const nbParts = nb.timecode.split(' --> ');
+      const nbStart = tcToSec(nbParts[0]);
+      // Clamp: can't go before nbStart + minDur, can't go past end - minDur
+      newStart = Math.max(nbStart + minDur, Math.min(end - minDur, newStart));
+      s.timecode = tlSecToTimecode(newStart, end);
+      nb.timecode = tlSecToTimecode(nbStart, newStart);
+    } else {
+      // Clamp against prev block end
+      newStart = Math.max(prevEnd, Math.max(0, newStart));
+      s.timecode = tlSecToTimecode(newStart, end);
+    }
+  }
+
+  tlRender();
+});
+
+document.addEventListener('mouseup', () => {
+  if (TL_DRAG) {
+    TL_DRAG = null;
+    // Sync timecodes back to subtitle list
+    renderSubs(window._subsElId || 'edSubs', CUR.subtitles);
+  }
+});
+
+function updateOverlayFromTimeline() {
+  const overlayText = document.getElementById('subOverlayText');
+  if (!overlayText || !CUR || window._currentTime === undefined) return;
+  const t = window._currentTime;
+  const active = CUR.subtitles.find(s => {
+    const parts = s.timecode.split(' --> ');
+    return t >= tcToSec(parts[0]) && t <= tcToSec(parts[1]);
+  });
+  if (active) { overlayText.textContent = active.text; overlayText.style.display = 'inline-block'; }
+  else { overlayText.style.display = 'none'; }
+}
 
 function init() { if (new URLSearchParams(window.location.search).get('client') === '1') { showClientMode(); return; } showHome(); }
 init();
