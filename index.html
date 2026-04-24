@@ -82,7 +82,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 .panel-title { font-size:15px; font-weight:600; }
 .panel-meta { font-size:12px; color:var(--muted); margin-top:2px; font-family:var(--mono); }
 .panel-head-btns { display:flex; gap:8px; }
-.player-body { flex:1; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#111; padding:32px 60px; }
+.player-body { flex:1; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#111; padding:40px; }
 .player-wrapper { position:relative; width:100%; aspect-ratio:16/9; border-radius:6px; overflow:hidden; }
 .player-wrapper iframe { position:absolute; inset:0; width:100%; height:100%; border:none; }
 .sub-overlay { position:absolute; bottom:80px; left:0; right:0; text-align:center; pointer-events:none; padding:0 40px; }
@@ -310,6 +310,34 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 
 <script>
 let PROJECTS = [], CUR = null, SRT_RAW = null, PLAYER_IFRAME = null, SYNC_INTERVAL = null;
+let HISTORY = [], HISTORY_MAX = 10;
+
+function historyPush() {
+  if (!CUR) return;
+  HISTORY.push(JSON.parse(JSON.stringify(CUR.subtitles)));
+  if (HISTORY.length > HISTORY_MAX) HISTORY.shift();
+}
+
+function historyUndo() {
+  if (!HISTORY.length || !CUR) { toast('Nothing to undo', 'err'); return; }
+  TL_EDIT_IDX = null;
+  TL_DRAG = null;
+  CUR.subtitles = HISTORY.pop();
+  renderSubs(window._subsElId || 'edSubs', CUR.subtitles);
+  tlRender();
+  toast('Undo!', 'ok');
+}
+
+// Cmd+Z (Mac) / Ctrl+Z (Win)
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+    const active = document.activeElement;
+    const isEditing = active && (active.getAttribute('contenteditable') === 'true' || active.tagName === 'TEXTAREA' || active.tagName === 'INPUT');
+    if (isEditing) return; // let browser handle undo inside text fields
+    e.preventDefault();
+    historyUndo();
+  }
+});
 
 function loadProjects() { try { PROJECTS = JSON.parse(localStorage.getItem('subedit_projects') || '[]'); } catch { PROJECTS = []; } }
 function saveProjects() { localStorage.setItem('subedit_projects', JSON.stringify(PROJECTS)); }
@@ -431,6 +459,7 @@ function createProject() {
 
 function openProject(id) {
   CUR = PROJECTS.find(p => p.id === id); if (!CUR) return;
+  HISTORY = [];
   show('vEditor');
   document.getElementById('topbar').style.display = 'none';
   document.getElementById('edTitle').textContent = CUR.name;
@@ -534,7 +563,7 @@ function highlightActiveSub(currentTime, subsElId) {
 document.addEventListener('keydown', e => {
   if (e.code !== 'Space') return;
   const active = document.activeElement;
-  const isEditing = active && active.getAttribute('contenteditable') === 'true';
+  const isEditing = active && (active.getAttribute('contenteditable') === 'true' || active.tagName === 'TEXTAREA' || active.tagName === 'INPUT');
   if (isEditing) return;
   e.preventDefault();
   const frame = document.getElementById('vimeoFrame');
@@ -597,6 +626,7 @@ function renderSubs(elId, subs) {
     });
 
     txt.addEventListener('focus', () => seekToSub(s));
+    txt.addEventListener('blur', () => historyPush());
 
     const tc = item.querySelector('.sub-tc');
     tc.style.cursor = 'pointer';
@@ -754,6 +784,14 @@ function tlRender() {
   // Blocks
   track.style.width = totalWidth + 'px';
   track.innerHTML = '';
+  track.onclick = e => {
+    if (e.target === track && TL_EDIT_IDX !== null) {
+      historyPush();
+      TL_EDIT_IDX = null;
+      tlRender();
+      renderSubs(window._subsElId || 'edSubs', CUR.subtitles);
+    }
+  };
   CUR.subtitles.forEach((s, i) => {
     const parts = s.timecode.split(' --> ');
     const start = tcToSec(parts[0]);
@@ -773,7 +811,8 @@ function tlRender() {
       ta.className = 'tl-block-input';
       ta.value = s.text;
       ta.addEventListener('input', () => { s.text = ta.value; updateOverlayFromTimeline(); });
-      ta.addEventListener('blur', () => { TL_EDIT_IDX = null; tlRender(); renderSubs(window._subsElId || 'edSubs', CUR.subtitles); });
+      ta.addEventListener('keydown', e => { if (e.key === 'Escape') { TL_EDIT_IDX = null; historyPush(); tlRender(); renderSubs(window._subsElId || 'edSubs', CUR.subtitles); } });
+      ta.addEventListener('mousedown', e => e.stopPropagation());
       ta.addEventListener('mousedown', e => e.stopPropagation());
       block.appendChild(ta);
       setTimeout(() => ta.focus(), 0);
@@ -800,23 +839,31 @@ function tlRender() {
     // Double click to edit
     block.addEventListener('dblclick', e => {
       if (e.target.classList.contains('tl-handle')) return;
+      TL_DRAG = null;
+      window._pendingDrag = null;
       TL_EDIT_IDX = i;
-      // Pause video
       const frame = document.getElementById('vimeoFrame');
       if (frame) frame.contentWindow.postMessage(JSON.stringify({ method: 'pause' }), '*');
       tlRender();
     });
 
-    // Drag start
+    // Register pending drag on mousedown
     block.addEventListener('mousedown', e => {
       if (e.target.classList.contains('tl-block-input')) return;
+      if (e.detail >= 2) return;
+      // Close any open text editing first
+      if (TL_EDIT_IDX !== null && TL_EDIT_IDX !== i) {
+        historyPush();
+        TL_EDIT_IDX = null;
+        tlRender();
+        renderSubs(window._subsElId || 'edSubs', CUR.subtitles);
+        return;
+      }
       e.preventDefault();
       const idx = parseInt(block.dataset.idx);
       const type = e.target.dataset.type;
       const startSec = tcToSec(CUR.subtitles[idx].timecode.split(' --> ')[0]);
       const endSec = tcToSec(CUR.subtitles[idx].timecode.split(' --> ')[1]);
-
-      // Check if right edge is shared with next block
       let neighborIdx = null;
       if (type === 'right' && idx < CUR.subtitles.length - 1) {
         const nextStart = tcToSec(CUR.subtitles[idx + 1].timecode.split(' --> ')[0]);
@@ -826,8 +873,7 @@ function tlRender() {
         const prevEnd = tcToSec(CUR.subtitles[idx - 1].timecode.split(' --> ')[1]);
         if (Math.abs(startSec - prevEnd) < 0.05) neighborIdx = idx - 1;
       }
-
-      TL_DRAG = { type: type || 'block', subIdx: idx, startX: e.clientX, startSec, endSec, neighborIdx };
+      window._pendingDrag = { type: type || 'block', subIdx: idx, startX: e.clientX, startSec, endSec, neighborIdx };
     });
 
     track.appendChild(block);
@@ -863,8 +909,28 @@ function tlUpdatePlayhead(currentTime) {
   }
 }
 
-// Mouse move and up for dragging
+document.addEventListener('mousedown', e => {
+  if (TL_EDIT_IDX === null) return;
+  const track = document.getElementById(TL_IDS.track);
+  if (!track) return;
+  if (!track.contains(e.target)) {
+    historyPush();
+    TL_EDIT_IDX = null;
+    tlRender();
+    renderSubs(window._subsElId || 'edSubs', CUR.subtitles);
+  }
+});
 document.addEventListener('mousemove', e => {
+  // Activate pending drag once mouse moves enough
+  if (window._pendingDrag && !TL_DRAG) {
+    if (Math.abs(e.clientX - window._pendingDrag.startX) > 3) {
+      historyPush();
+      TL_DRAG = window._pendingDrag;
+      window._pendingDrag = null;
+    } else {
+      return;
+    }
+  }
   if (!TL_DRAG || !CUR) return;
   const dx = e.clientX - TL_DRAG.startX;
   const dSec = dx / TL_PX_PER_SEC;
@@ -931,9 +997,9 @@ document.addEventListener('mousemove', e => {
 });
 
 document.addEventListener('mouseup', () => {
+  window._pendingDrag = null;
   if (TL_DRAG) {
     TL_DRAG = null;
-    // Sync timecodes back to subtitle list
     renderSubs(window._subsElId || 'edSubs', CUR.subtitles);
   }
 });
