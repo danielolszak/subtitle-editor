@@ -388,11 +388,9 @@ function doSplit(idx) {
   const startSec = tcToSec(parts[0]);
   const endSec = tcToSec(parts[1]);
   const midSec = (startSec + endSec) / 2;
-  const words = s.text.split(' ');
-  const half = Math.ceil(words.length / 2);
-  const newSub = { index: s.index + 1, timecode: tlSecToTimecode(midSec, endSec), text: words.slice(half).join(' ') || '...' };
+  const originalText = s.text;
   s.timecode = tlSecToTimecode(startSec, midSec);
-  s.text = words.slice(0, half).join(' ') || '...';
+  const newSub = { index: s.index + 1, timecode: tlSecToTimecode(midSec, endSec), text: originalText };
   CUR.subtitles.splice(idx + 1, 0, newSub);
   CUR.subtitles.forEach((sub, i) => sub.index = i + 1);
   TL_SPLIT_MODE = false; TL_SELECTED = null;
