@@ -277,8 +277,25 @@ function tcToSec(tc) {
 function onFile(inp) {
   const f = inp.files[0]; if (!f) return;
   const r = new FileReader();
-  r.onload = e => { SRT_RAW = e.target.result; const ok = document.getElementById('fileOk'); ok.textContent = 'File loaded: ' + f.name; ok.style.display = 'block'; };
+  r.onload = e => {
+    SRT_RAW = e.target.result;
+    setDropzoneLoaded(f.name);
+  };
   r.readAsText(f, 'UTF-8');
+}
+
+function setDropzoneLoaded(filename) {
+  const dz = document.getElementById('dz');
+  dz.innerHTML = `<strong style="color:var(--accent)">${filename}</strong><p style="color:var(--accent);opacity:0.7">File loaded — ready to create project</p>`;
+  dz.style.borderColor = 'var(--accent)';
+  dz.style.background = 'rgba(91,82,200,0.06)';
+}
+
+function resetDropzone() {
+  const dz = document.getElementById('dz');
+  dz.innerHTML = `<strong>Click or drag & drop your .srt file</strong><p>.srt files only</p><div class="ok" id="fileOk"></div>`;
+  dz.style.borderColor = '';
+  dz.style.background = '';
 }
 
 const dz = document.getElementById('dz');
@@ -287,7 +304,7 @@ dz.addEventListener('dragleave', () => dz.classList.remove('over'));
 dz.addEventListener('drop', e => {
   e.preventDefault(); dz.classList.remove('over');
   const f = e.dataTransfer.files[0];
-  if (f && f.name.endsWith('.srt')) { const r = new FileReader(); r.onload = ev => { SRT_RAW = ev.target.result; const ok = document.getElementById('fileOk'); ok.textContent = 'File loaded: ' + f.name; ok.style.display = 'block'; }; r.readAsText(f, 'UTF-8'); }
+  if (f && f.name.endsWith('.srt')) { const r = new FileReader(); r.onload = ev => { SRT_RAW = ev.target.result; setDropzoneLoaded(f.name); }; r.readAsText(f, 'UTF-8'); }
 });
 
 function showHome() {
@@ -352,7 +369,7 @@ function createProject() {
   const proj = { id, name, vimeoUrl: vimeo, createdAt: new Date().toISOString(), subtitles: subs };
   PROJECTS.unshift(proj); saveProjects();
   SRT_RAW = null; document.getElementById('pName').value = ''; document.getElementById('pVimeo').value = '';
-  document.getElementById('fileOk').style.display = 'none'; document.getElementById('fileIn').value = '';
+  resetDropzone(); document.getElementById('fileIn').value = '';
   toast('Project created!', 'ok'); openProject(id);
 }
 
@@ -519,7 +536,6 @@ function importFromClientInEditor(inp) {
     try {
       const proj = JSON.parse(e.target.result);
       if (!proj.subtitles) throw new Error('Invalid file');
-      if (proj.id !== CUR.id) { toast('This file belongs to a different project', 'err'); return; }
       CUR.subtitles = proj.subtitles;
       const idx = PROJECTS.findIndex(p => p.id === CUR.id);
       if (idx > -1) PROJECTS[idx] = CUR;
@@ -534,7 +550,7 @@ function importFromClientInEditor(inp) {
 
 function showClientMode() {
   stopSync(); show('vClient');
-  document.getElementById('topbarRight').innerHTML = `<button class="btn btn-sm" onclick="goHome()">Editor view</button>`;
+  document.getElementById('topbarRight').innerHTML = '';
   document.getElementById('clTitle').textContent = 'Upload project file';
   document.getElementById('clPlayer').innerHTML = `<div style="text-align:center;color:var(--muted);max-width:400px"><p style="margin-bottom:20px;font-size:15px;line-height:1.6">Upload the <strong>.subedit.json</strong> file you received from the editor to start reviewing subtitles.</p><button class="btn btn-primary" onclick="document.getElementById('clientFileIn').click()">Upload project file</button><input type="file" id="clientFileIn" accept=".json" style="display:none" onchange="loadClientFile(this)" /></div>`;
   document.getElementById('clSubs').innerHTML = '<div class="empty">Upload the project file to see subtitles.</div>';
