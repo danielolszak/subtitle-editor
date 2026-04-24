@@ -82,7 +82,10 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 .panel-meta { font-size:12px; color:var(--muted); margin-top:2px; font-family:var(--mono); }
 .panel-head-btns { display:flex; gap:8px; }
 .player-body { flex:1; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#111; padding:52px 80px; }
-.player-body iframe { width:100%; aspect-ratio:16/9; border:none; border-radius:6px; }
+.player-wrapper { position:relative; width:100%; aspect-ratio:16/9; border-radius:6px; overflow:hidden; }
+.player-wrapper iframe { position:absolute; inset:0; width:100%; height:100%; border:none; }
+.sub-overlay { position:absolute; bottom:48px; left:0; right:0; text-align:center; pointer-events:none; padding:0 40px; }
+.sub-overlay-text { display:inline-block; background:rgba(0,0,0,0.75); color:#fff; font-size:18px; font-weight:500; line-height:1.5; padding:6px 16px; border-radius:4px; white-space:pre-wrap; max-width:80%; }
 .no-video { text-align:center; color:var(--muted); font-size:14px; }
 
 .subs-side { display:flex; flex-direction:column; overflow:hidden; background:var(--bg2); }
@@ -392,7 +395,11 @@ function renderPlayer(elId, url, subsElId) {
   const m = url.match(/vimeo\.com\/(\d+)/);
   if (!m) { el.innerHTML = '<div class="no-video">Invalid Vimeo link</div>'; return; }
   const src = `https://player.vimeo.com/video/${m[1]}?api=1`;
-  el.innerHTML = `<iframe id="vimeoFrame" src="${src}" allowfullscreen allow="autoplay; fullscreen; picture-in-picture"></iframe>`;
+  el.innerHTML = `
+    <div class="player-wrapper">
+      <iframe id="vimeoFrame" src="${src}" allowfullscreen allow="autoplay; fullscreen; picture-in-picture"></iframe>
+      <div class="sub-overlay" id="subOverlay"><span class="sub-overlay-text" id="subOverlayText" style="display:none"></span></div>
+    </div>`;
   const frame = el.querySelector('#vimeoFrame');
   frame.addEventListener('load', () => {
     frame.contentWindow.postMessage(JSON.stringify({ method: 'addEventListener', value: 'play' }), '*');
@@ -443,6 +450,18 @@ function highlightActiveSub(currentTime, subsElId) {
     const end = tcToSec(parts[1]);
     if (currentTime >= start && currentTime <= end) activeIdx = i;
   });
+
+  // Update overlay
+  const overlayText = document.getElementById('subOverlayText');
+  if (overlayText) {
+    if (activeIdx > -1) {
+      overlayText.textContent = CUR.subtitles[activeIdx].text;
+      overlayText.style.display = 'inline-block';
+    } else {
+      overlayText.style.display = 'none';
+    }
+  }
+
   items.forEach((item, i) => {
     const isActive = i === activeIdx;
     item.classList.toggle('active-sub', isActive);
@@ -454,6 +473,22 @@ function highlightActiveSub(currentTime, subsElId) {
     }
   });
 }
+
+// Spacebar play/pause
+document.addEventListener('keydown', e => {
+  if (e.code !== 'Space') return;
+  const active = document.activeElement;
+  const isEditing = active && active.getAttribute('contenteditable') === 'true';
+  if (isEditing) return;
+  e.preventDefault();
+  const frame = document.getElementById('vimeoFrame');
+  if (!frame) return;
+  if (window._isPlaying) {
+    frame.contentWindow.postMessage(JSON.stringify({ method: 'pause' }), '*');
+  } else {
+    frame.contentWindow.postMessage(JSON.stringify({ method: 'play' }), '*');
+  }
+});
 
 function stopSync() {
   if (SYNC_INTERVAL) { clearInterval(SYNC_INTERVAL); SYNC_INTERVAL = null; }
@@ -497,6 +532,12 @@ function renderSubs(elId, subs) {
     txt.addEventListener('input', () => {
       s.text = txt.innerText;
       txt.classList.toggle('dirty', s.text !== orig);
+      // Update overlay if this sub is currently active
+      const overlayText = document.getElementById('subOverlayText');
+      if (overlayText && overlayText.style.display !== 'none') {
+        const activeItem = document.querySelector('.sub.active-sub');
+        if (activeItem === item) overlayText.textContent = s.text;
+      }
     });
 
     txt.addEventListener('focus', () => seekToSub(s));
