@@ -164,6 +164,9 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
     <h1>Sub Buddy</h1>
     <p style="font-size:18px;font-weight:500;color:var(--accent);margin-bottom:12px">Subtitle Editor</p>
     <p>Upload an .srt file, add a Vimeo link and send the project to your client for review.</p>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:24px">
+      <a href="https://forms.office.com/r/k1YPMrWfgM" target="_blank" class="btn btn-sm">Send feedback</a>
+    </div>
 
     <div class="two-col">
       <div class="card">
@@ -206,8 +209,9 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
           <div class="panel-meta" id="edMeta"></div>
         </div>
         <div class="panel-head-btns">
+          <a href="https://forms.office.com/r/k1YPMrWfgM" target="_blank" class="btn btn-sm">Send feedback</a>
           <button class="btn btn-sm" onclick="openSendModal()">Send to client</button>
-          <button class="btn btn-sm btn-success" onclick="document.getElementById('importClientIn').click()">Import from client</button>
+          <button class="btn btn-sm" onclick="document.getElementById('importClientIn').click()">Import from client</button>
           <input type="file" id="importClientIn" accept=".json" style="display:none" onchange="importFromClientInEditor(this)" />
           <button class="btn btn-sm" onclick="dlSrt()">Download .srt</button>
           <button class="btn btn-sm" onclick="goHome()">Back</button>
@@ -258,7 +262,10 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
           <div class="panel-title" id="clTitle"></div>
           <div class="panel-meta">Client mode — text editing only</div>
         </div>
-        <button class="btn btn-sm btn-success" onclick="clientExport()">Save & return to editor</button>
+        <div style="display:flex;gap:8px">
+          <a href="https://forms.office.com/r/k1YPMrWfgM" target="_blank" class="btn btn-sm">Send feedback</a>
+          <button class="btn btn-sm btn-success" onclick="clientExport()">Save & return to editor</button>
+        </div>
       </div>
       <div class="player-body" id="clPlayer"></div>
     </div>
